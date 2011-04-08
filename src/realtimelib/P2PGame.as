@@ -31,13 +31,20 @@ package realtimelib
 		private var session:P2PSession;
 		public var realtimeChannelManager:RealtimeChannelManager;
 		// callbacks
+
+		
+
 		public var receiveMovementCallback:Function;
 		public var receivePositionCallback:Function;
 		public var receiveMousePositionCallback:Function;
 		public var receiveRotationCallback:Function;
 		public var receiveSpeedCallback:Function;
 		
-		public var running:Boolean = false;
+		private var _running:Boolean = false;
+		public function get running():Boolean
+		{
+			return _running;
+		}
 		
 		private var serverAddr:String;
 		private var groupName:String;
@@ -211,12 +218,12 @@ package realtimelib
 		*/
 		public function receiveStartGame(peerID:String):void{
 			dispatchEvent(new GameEvent(GameEvent.START_GAME,peerID));
-			running = true;
+			_running = true;
 		}
 		
 		public function receiveGameOver(peerID:String):void{
 			dispatchEvent(new GameEvent(GameEvent.GAME_OVER,peerID));
-			running = false;
+			_running = false;
 		}
 		
 		/*
