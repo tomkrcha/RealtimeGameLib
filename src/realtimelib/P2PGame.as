@@ -74,12 +74,14 @@ package realtimelib
 		private var _groupName:String;
 		private var _channelBroadcaster:P2PGameStreamBroadcaster;
 		private var _channelClient:P2PGameStreamReceiver;
+		private var _gameNetConnectionClient:Class;
 	
 		
-		public function P2PGame(serverAddr:String, groupName:String="defaultGroup")
+		public function P2PGame(serverAddr:String, groupName:String="defaultGroup", gameNetConnectionClient:Class=null)
 		{
-			this._serverAddr = serverAddr;
-			this._groupName = groupName;
+			_serverAddr = serverAddr;
+			_groupName = groupName;
+			_gameNetConnectionClient = gameNetConnectionClient;
 		}
 				
 		/**
@@ -87,7 +89,7 @@ package realtimelib
 		 */
 		public function connect(userName:String, userDetails:Object=null):void
 		{
-			_session = new P2PSession(_serverAddr, _groupName);			
+			_session = new P2PSession(_serverAddr, _groupName, _gameNetConnectionClient);			
 			_session.addEventListener(Event.CONNECT, onConnect);
 			_session.addEventListener(ConnectionStatusEvent.STATUS_CHANGE, onStatusChange);
 			_session.connect(userName, userDetails);
