@@ -7,7 +7,7 @@ package realtimelib
 	 * Creates game on FMS server and allows RTMFP/RTMP bridge communication
 	 * Warning: not implemented yet
 	 */
-	public class RealtimeGame implements IRealtimeGame
+	public class RealtimeGame// implements IRealtimeGame
 	{
 		public function RealtimeGame()
 		{

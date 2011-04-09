@@ -56,7 +56,8 @@ package realtimelib.session
 		/**
 		 * Connect to Rendezvous Service
 		 */
-		public function connect(userName:String,userDetails:Object=null):void{
+		public function connect(userName:String,userDetails:Object=null):void
+		{
 			this.userName = userName;
 			this.userDetails = userDetails;
 			

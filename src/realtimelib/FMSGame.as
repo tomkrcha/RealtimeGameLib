@@ -33,7 +33,7 @@ package realtimelib
 	 * Creates new FMS game, needs an application installed on FMS server
 	 * Warning: experimental class
 	 */
-	public class FMSGame extends EventDispatcher implements IRealtimeGame
+	public class FMSGame extends EventDispatcher //implements IRealtimeGame
 	{
 
 		// callbacks
