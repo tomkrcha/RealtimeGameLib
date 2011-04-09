@@ -60,6 +60,12 @@ package realtimelib.session
 			// create the base NetGroup and add an internal event listener
 			super(connection, groupspec);
 			
+			initializeUserList(connection, groupspec, username, userDetails);
+		}
+		
+		protected function initializeUserList(connection:NetConnection, groupspec:String, username:String, userDetails:Object):void
+		{
+			// TODO Auto Generated method stub
 			// add event listener for NetGroup.Connect.Success which is sent on the NetConnection's status handler
 			connection.addEventListener(NetStatusEvent.NET_STATUS, this.connectionStatusHandler);
 			
@@ -104,7 +110,7 @@ package realtimelib.session
 			// user details
 			m_userDetails = userDetails;
 		}
-
+		
 		/**
 		 * The interval in which to check if users have expired. 
 		 * @return 
