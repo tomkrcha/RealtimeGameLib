@@ -1,16 +1,17 @@
 /* Created by Tom Krcha (http://flashrealtime.com/, http://twitter.com/tomkrcha). Provided "as is" in public domain with no guarantees */
 package realtimelib
 {
+	import flash.events.Event;
+	import flash.events.EventDispatcher;
+	
+	import realtimelib.events.ConnectionStatusEvent;
+	import realtimelib.events.GameEvent;
+	import realtimelib.events.PeerStatusEvent;
 	import realtimelib.session.GroupChat;
 	import realtimelib.session.ISession;
 	import realtimelib.session.P2PSession;
 	import realtimelib.session.UserList;
 	import realtimelib.session.UserObject;
-	import realtimelib.events.PeerStatusEvent;
-	
-	import flash.events.Event;
-	import flash.events.EventDispatcher;
-	import realtimelib.events.GameEvent;
 
 	[Event(name="change",type="flash.events.Event")]
 	[Event(name="connect", type="flash.events.Event")]
@@ -61,8 +62,19 @@ package realtimelib
 		public function connect(userName:String,userDetails:Object=null):void{
 			session = new P2PSession(serverAddr,groupName);			
 			session.addEventListener(Event.CONNECT, onConnect);
+			session.addEventListener(ConnectionStatusEvent.STATUS_CHANGE, onStatusChange);
 			session.connect(userName,userDetails);
 			trace("CONNECT: "+userName);
+		}
+		
+		protected function onStatusChange(event:ConnectionStatusEvent):void
+		{
+			switch (event.status)
+			{
+				case ConnectionStatusEvent.DISCONNECTED:
+					dispatchEvent(new Event(Event.CLOSE));
+					break;
+			}
 		}
 		
 		/**
@@ -77,6 +89,7 @@ package realtimelib
 		 */
 		protected function onConnect(event:Event):void{
 			Logger.log("onConnect");
+			
 			session.addEventListener(Event.CHANGE, onUserListChange);
 			session.addEventListener(PeerStatusEvent.USER_ADDED, onUserAdded);
 			session.addEventListener(PeerStatusEvent.USER_REMOVED, onUserRemoved);
