@@ -102,8 +102,10 @@ package realtimelib.session
 		/**
 		 * Join group
 		 */
-		public function join():void
+		public function join(groupName:Number):void
 		{
+			_groupName = groupName.toString();
+			
 			const userObject:UserObject = _getUserObject();
 			
 			_startMainChat(userObject);
@@ -187,13 +189,6 @@ package realtimelib.session
 		}
 		
 		// Handlers
-		/**
-		 * Dispatched when user connects to Stratus
-		 */
-		protected function onConnect():void{
-//			join();
-		}
-		
 		/**
 		 * Dispatched when user disconnects from Stratus
 		 */
@@ -279,9 +274,6 @@ package realtimelib.session
 					statusWrite("- Connected to Adobe Stratus -");
 					
 					changeStatus(ConnectionStatusEvent.CONNECTED);
-					
-					onConnect();
-					
 					break;
 				
 				case "NetConnection.Connect.Closed":

@@ -31,14 +31,6 @@ package realtimelib
 	public class P2PGame extends EventDispatcher //implements IRealtimeGame
 	{
 		
-		private var _session:P2PSession;
-		
-		public var realtimeChannelManager:RealtimeChannelManager;
-		// callbacks
-
-		
-		private var _running:Boolean = false;
-
 		public function get groupName():String
 		{
 			return _groupName;
@@ -80,11 +72,16 @@ package realtimelib
 			return _running;
 		}
 		
+		private var _realtimeChannelManager:RealtimeChannelManager;
+		private var _session:P2PSession;
+		private var _running:Boolean = false;
 		private var _serverAddr:String;
 		private var _groupName:String;
 		private var _channelBroadcaster:P2PGameStreamBroadcaster;
 		private var _channelClient:P2PGameStreamReceiver;
 		private var _gameNetConnectionClient:Class;
+		private var _gameUserName:String;
+		private var _gameUserDetails:Object;
 	
 		
 		public function P2PGame(serverAddr:String, groupName:String="defaultGroup", gameNetConnectionClient:Class=null)
@@ -99,6 +96,9 @@ package realtimelib
 		 */
 		public function connect(userName:String, userDetails:Object=null):void
 		{
+			_gameUserName = userName;
+			_gameUserDetails = userDetails;
+			
 			_session = new P2PSession(_serverAddr, _groupName, _gameNetConnectionClient);			
 			_session.addEventListener(Event.CONNECT, onConnect);
 			_session.addEventListener(ConnectionStatusEvent.STATUS_CHANGE, onStatusChange);
@@ -136,19 +136,29 @@ package realtimelib
 		{
 			Logger.log("onConnect");
 			
-			_session.addEventListener(Event.CHANGE, onUserListChange);
-			_session.addEventListener(PeerStatusEvent.USER_ADDED, onUserAdded);
-			_session.addEventListener(PeerStatusEvent.USER_REMOVED, onUserRemoved);
+			_addSessionEventHandlers();
 			
-			realtimeChannelManager = new RealtimeChannelManager(_session);
-			_channelBroadcaster = createBroadcaster();
+			//_startRealTimeChannelManager();
 			
 			dispatchEvent(new Event(Event.CONNECT));
 		}
 		
+		private function _startRealTimeChannelManager():void
+		{
+			_realtimeChannelManager = new RealtimeChannelManager(_session);
+			_channelBroadcaster = createBroadcaster();
+		}
+		
+		private function _addSessionEventHandlers():void
+		{
+			_session.addEventListener(Event.CHANGE, onUserListChange);
+			_session.addEventListener(PeerStatusEvent.USER_ADDED, onUserAdded);
+			_session.addEventListener(PeerStatusEvent.USER_REMOVED, onUserRemoved);
+		}
+		
 		protected function createBroadcaster():P2PGameStreamBroadcaster
 		{
-			return new P2PGameStreamBroadcaster(realtimeChannelManager, _session);
+			return new P2PGameStreamBroadcaster(_realtimeChannelManager, _session);
 		}
 		
 		protected function onUserListChange(event:Event):void
@@ -161,7 +171,7 @@ package realtimelib
 		{
 			if (event.info.id!=_session.myUser.id)
 			{
-				realtimeChannelManager.addRealtimeChannel(event.info.id, getChannelClient()); // Sets the client on the receiving netstream to this (P2PGame)
+				_realtimeChannelManager.addRealtimeChannel(event.info.id, getChannelClient()); // Sets the client on the receiving netstream to this (P2PGame)
 				dispatchEvent(event);
 			}
 		}
@@ -178,7 +188,7 @@ package realtimelib
 		{
 			if (event.info.id!=_session.myUser.id)
 			{
-				realtimeChannelManager.removeRealtimeChannel(event.info.id);
+				_realtimeChannelManager.removeRealtimeChannel(event.info.id);
 				dispatchEvent(event);
 			}
 		}
@@ -229,5 +239,16 @@ package realtimelib
 			return obj;
 		}
 		
+		public function joinGroup(groupId:Number):void
+		{
+			_session.addEventListener(ConnectionStatusEvent.STATUS_CHANGE, handleGroupConnected);
+			_session.join(groupId);
+		}
+		
+		protected function handleGroupConnected(event:ConnectionStatusEvent):void
+		{
+			if (event.status == ConnectionStatusEvent.CONNECTED_GROUP)
+				dispatchEvent(event);
+		}
 	}
 }

@@ -26,6 +26,9 @@ package realtimelib.events
 		}
 		
 		
-		
+		override public function clone():Event
+		{
+			return new ConnectionStatusEvent(type, status, bubbles, cancelable);
+		}
 	}
 }
