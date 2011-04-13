@@ -138,8 +138,6 @@ package realtimelib
 			
 			_addSessionEventHandlers();
 			
-			//_startRealTimeChannelManager();
-			
 			dispatchEvent(new Event(Event.CONNECT));
 		}
 		
@@ -248,7 +246,10 @@ package realtimelib
 		protected function handleGroupConnected(event:ConnectionStatusEvent):void
 		{
 			if (event.status == ConnectionStatusEvent.CONNECTED_GROUP)
+			{
 				dispatchEvent(event);
+				_startRealTimeChannelManager();
+			}
 		}
 	}
 }
