@@ -191,7 +191,7 @@ package realtimelib.session
 		 * Dispatched when user connects to Stratus
 		 */
 		protected function onConnect():void{
-			join();
+//			join();
 		}
 		
 		/**

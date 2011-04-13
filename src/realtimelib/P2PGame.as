@@ -39,6 +39,16 @@ package realtimelib
 		
 		private var _running:Boolean = false;
 
+		public function get groupName():String
+		{
+			return _groupName;
+		}
+
+		public function set groupName(value:String):void
+		{
+			_groupName = value;
+		}
+
 		/**
 		 * Receives messages from the other peers. This object provides
 		 * setters for assigning callbacks to messages from connected
@@ -93,7 +103,6 @@ package realtimelib
 			_session.addEventListener(Event.CONNECT, onConnect);
 			_session.addEventListener(ConnectionStatusEvent.STATUS_CHANGE, onStatusChange);
 			_session.connect(userName, userDetails);
-			trace("CONNECT: "+userName);
 		}
 		
 		protected function setRunning(value:Boolean):void
@@ -116,7 +125,8 @@ package realtimelib
 		 */
 		public function close():void
 		{
-			_session.close();
+			if (_session)
+				_session.close();
 		}
 		
 		/*
