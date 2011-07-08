@@ -199,7 +199,7 @@ package realtimelib.session
 		 * returns GroupSpecifier String, here you can enable, disable group params
 		 */
 		public function getGroupSpec():GroupSpecifier{
-			var groupspec:GroupSpecifier = new GroupSpecifier("test123");
+			var groupspec:GroupSpecifier = new GroupSpecifier(this.groupName);
 			groupspec.postingEnabled = true;
 			groupspec.serverChannelEnabled = true;
 			groupspec.routingEnabled = true;
