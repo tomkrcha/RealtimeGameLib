@@ -1,12 +1,6 @@
 /* Created by Tom Krcha (http://flashrealtime.com/, http://twitter.com/tomkrcha). Provided "as is" in public domain with no guarantees */
 package realtimelib.session
 {
-	import realtimelib.session.ISession;
-	import realtimelib.events.ChatMessageEvent;
-	import realtimelib.events.ConnectionStatusEvent;
-	import realtimelib.events.PeerStatusEvent;
-	import realtimelib.events.StatusInfoEvent;
-	
 	import flash.events.Event;
 	import flash.events.EventDispatcher;
 	import flash.events.IEventDispatcher;
@@ -18,6 +12,12 @@ package realtimelib.session
 	import flash.net.NetGroupSendMode;
 	import flash.net.NetGroupSendResult;
 	import flash.net.NetStream;
+	
+	import realtimelib.events.ChatMessageEvent;
+	import realtimelib.events.ConnectionStatusEvent;
+	import realtimelib.events.PeerStatusEvent;
+	import realtimelib.events.StatusInfoEvent;
+	import realtimelib.session.ISession;
 	
 	[Event(name="statusInfo",type="realtimelib.events.StatusInfoEvent")]
 	[Event(name="chatMessage",type="realtimelib.events.ChatMessageEvent")]
@@ -43,34 +43,58 @@ package realtimelib.session
 		private var _myUser:UserObject;		
 		private var _mainChat:GroupChat;
 		
-		private var chatSequence:uint = 0;
-		private var serverAddr:String;
-		private var groupName:String;
+		private var _chatSequence:uint = 0;
+		private var _serverAddr:String;
+		private var _groupName:String;
+		private var _gameNetConnectionClient:Class;
 		
-		public function P2PSession(serverAddr:String,groupName:String="defaultGroup")
+		public function P2PSession(serverAddr:String,groupName:String="defaultGroup", gameNetConnectionClient:Class=null)
 		{
-			this.serverAddr = serverAddr;
-			this.groupName = groupName;
+			_initialize(serverAddr, groupName, gameNetConnectionClient);
+		}
+		private function _initialize(serverAddr:String, groupName:String="defaultGroup", gameNetConnectionClient:Class=null):void
+		{
+			_serverAddr = serverAddr;
+			_groupName = groupName;
+			_gameNetConnectionClient = gameNetConnectionClient;
 		}
 		
 		/**
 		 * Connect to Rendezvous Service
 		 */
-		public function connect(userName:String,userDetails:Object=null):void{
-			this.userName = userName;
-			this.userDetails = userDetails;
+		public function connect(userName:String,userDetails:Object=null):void
+		{
+			_storeUserInformation(userName, userDetails);
 			
-			connection = new NetConnection();
-			connection.addEventListener(NetStatusEvent.NET_STATUS,netStatus,false,0,true);
-			connection.connect(serverAddr);
+			_startNetConnection();
 			
 			changeStatus(ConnectionStatusEvent.CONNECTING);
 		}
+		private function _startNetConnection():void
+		{
+			connection = new NetConnection();
+			
+			if (_gameNetConnectionClient)
+			{
+				connection.client = new _gameNetConnectionClient(connection, this);
+			}
+			
+			connection.addEventListener(NetStatusEvent.NET_STATUS, netStatus, false, 0, true);
+			connection.connect(_serverAddr, userName, userDetails);
+		}
+		private function _storeUserInformation(userName:String, userDetails:Object):void
+		{
+			this.userName = userName;
+			this.userDetails = userDetails;
+		}
+		
+		
 		
 		/**
 		 * Close connection and reset
 		 */
-		public function close():void{
+		public function close():void
+		{
 			connection.close();
 			connection = null;
 		}
@@ -78,22 +102,37 @@ package realtimelib.session
 		/**
 		 * Join group
 		 */
-		public function join():void{
+		public function join(groupName:Number):void
+		{
+			_groupName = groupName.toString();
 			
-			myUser = new UserObject();
-			myUser.name = userName;
-			myUser.details = userDetails;
+			const userObject:UserObject = _getUserObject();
 			
-			mainChat = new GroupChat(this, getGroupSpec().groupspecWithAuthorizations(),myUser.name,myUser.details);			
-		
-			mainChat.addEventListener(NetStatusEvent.NET_STATUS,netStatus,false,0,true);
-			mainChat.addEventListener(PeerStatusEvent.USER_ADDED, function(event:PeerStatusEvent):void{
-				dispatchEvent(event);
-			});
-			mainChat.addEventListener(PeerStatusEvent.USER_REMOVED, function(event:PeerStatusEvent):void{
-				dispatchEvent(event);
-			});
+			_startMainChat(userObject);
+		}
+		private function _startMainChat(userObject:UserObject):void
+		{
+			const groupspec:String = getGroupSpec().groupspecWithAuthorizations();
 			
+			mainChat = new GroupChat(this, groupspec, userObject.name, userObject.details);			
+			mainChat.addEventListener(NetStatusEvent.NET_STATUS, netStatus, false, 0, true);
+			mainChat.addEventListener(PeerStatusEvent.USER_ADDED, _handlePeerStatusEvent, false, 0, true);
+			mainChat.addEventListener(PeerStatusEvent.USER_REMOVED, _handlePeerStatusEvent, false, 0, true);
+		}
+		private function _getUserObject():UserObject
+		{
+			if (null == myUser)
+			{
+				myUser = new UserObject();
+				myUser.name = userName;
+				myUser.details = userDetails;
+			}
+			
+			return myUser;
+		}
+		private function _handlePeerStatusEvent(event:PeerStatusEvent):void
+		{
+			dispatchEvent(event);
 		}
 		
 		/**
@@ -116,7 +155,7 @@ package realtimelib.session
 				msgObj.username = myUser.name;
 				msgObj.type = "openPrivateChat";
 				msgObj.sender = myUser;
-				msgObj.sequence = chatSequence++;
+				msgObj.sequence = _chatSequence++;
 				msgObj.withUsers = withUsers;
 				msgObj.groupName = groupName;
 				
@@ -150,13 +189,6 @@ package realtimelib.session
 		}
 		
 		// Handlers
-		/**
-		 * Dispatched when user connects to Stratus
-		 */
-		protected function onConnect():void{
-			join();
-		}
-		
 		/**
 		 * Dispatched when user disconnects from Stratus
 		 */
@@ -242,9 +274,6 @@ package realtimelib.session
 					statusWrite("- Connected to Adobe Stratus -");
 					
 					changeStatus(ConnectionStatusEvent.CONNECTED);
-					
-					onConnect();
-					
 					break;
 				
 				case "NetConnection.Connect.Closed":

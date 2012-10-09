@@ -1,7 +1,5 @@
 package realtimelib.session
 {
-	import realtimelib.events.PeerStatusEvent;
-	
 	import flash.events.Event;
 	import flash.events.NetStatusEvent;
 	import flash.events.TimerEvent;
@@ -11,6 +9,8 @@ package realtimelib.session
 	import flash.utils.Timer;
 	import flash.utils.getTimer;
 	import flash.utils.setTimeout;
+	
+	import realtimelib.events.PeerStatusEvent;
 	
 	[Event(name="userAdded",type="com.adobe.fms.PeerStatusEvent")]
 	[Event(name="userRemoved",type="com.adobe.fms.PeerStatusEvent")]
@@ -60,6 +60,12 @@ package realtimelib.session
 			// create the base NetGroup and add an internal event listener
 			super(connection, groupspec);
 			
+			initializeUserList(connection, groupspec, username, userDetails);
+		}
+		
+		protected function initializeUserList(connection:NetConnection, groupspec:String, username:String, userDetails:Object):void
+		{
+			// TODO Auto Generated method stub
 			// add event listener for NetGroup.Connect.Success which is sent on the NetConnection's status handler
 			connection.addEventListener(NetStatusEvent.NET_STATUS, this.connectionStatusHandler);
 			
@@ -104,7 +110,7 @@ package realtimelib.session
 			// user details
 			m_userDetails = userDetails;
 		}
-
+		
 		/**
 		 * The interval in which to check if users have expired. 
 		 * @return 
@@ -170,20 +176,24 @@ package realtimelib.session
 			if( evt.info.code == "NetGroup.Connect.Success" )
 			{
 				// removes the EventListener as we no longer need it
-				(evt.target as NetConnection).removeEventListener(NetStatusEvent.NET_STATUS, this.connectionStatusHandler);
+				const netConnection:NetConnection = evt.target as NetConnection;
+				netConnection.removeEventListener(NetStatusEvent.NET_STATUS, this.connectionStatusHandler);
 				
 				// ok we're connected, create a new user list entry for self
-				var uo:UserObject = new UserObject();
-					uo.id = m_nearID;
-					uo.name = m_userName;
-					uo.stamp = getTimer();
-					uo.address = groupAddress;
-					uo.details = m_userDetails;
+				if (netConnection.connected)
+				{
+					var uo:UserObject = new UserObject();
+						uo.id = m_nearID;
+						uo.name = m_userName;
+						uo.stamp = getTimer();
+						uo.address = groupAddress;
+						uo.details = m_userDetails;
+						
+					m_userList[m_nearID] = uo;
 					
-				m_userList[m_nearID] = uo;
-				
-				// dispatch user added event for self
-				dispatchEvent( new PeerStatusEvent(PeerStatusEvent.USER_ADDED, true, false, uo) );
+					// dispatch user added event for self
+					dispatchEvent( new PeerStatusEvent(PeerStatusEvent.USER_ADDED, true, false, uo) );
+				}
 			}
 		}
 		
